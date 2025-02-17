@@ -8,6 +8,26 @@ turtles-own [ energy ] ; establishes energy for woollys and predators
 
 to setup
   clear-all
+  ifelse netlogo-web? [ set max-woollys 10000 ] [ set max-woollys 30000]
+
+  ; create the woollys
+  create-woollys initial-number-woollys
+  [
+    set shape "monkey"
+    set size 1.5
+    set energy 100000
+    setxy random-xcor random-ycor
+  ]
+
+  ; create predators
+  create-predators initial-number-predators
+  [
+   set shape "cat"
+   set size 2
+   set color red
+   set energy 100000
+   setxy random-xcor random-ycor
+  ]
 
 end
 @#$#@#$#@
@@ -118,7 +138,7 @@ initial-number-predators
 initial-number-predators
 0
 100
-50.0
+7.0
 1
 1
 NIL
@@ -234,11 +254,12 @@ Scales include time
 
 ## 8. Pushing changes to Github
 1. Open git bash console
-2. Enter: git status
-3. Enter: git add Predation.nlogo
-	3a. if adding other files in the folder change "Predation.nlogo" to whatever file 	it is
-4. Enter: git commit -m "COMMIT NAME HERE"
-5. Enter: git push origin main
+2. Enter: cd C:\Users\Jawor\Desktop\ABMS\Predation
+3. Enter: git status
+4. Enter: git add Predation.nlogo
+	4a. if adding other files in the folder change "Predation.nlogo" to whatever file 	it is
+5. Enter: git commit -m "COMMIT NAME HERE"
+6. Enter: git push origin main
 
 ## 9. Pulling Changes Down from Github
 1. Open git bash concole
@@ -301,6 +322,35 @@ Circle -16777216 true false 30 180 90
 Polygon -16777216 true false 162 80 132 78 134 135 209 135 194 105 189 96 180 89
 Circle -7500403 true true 47 195 58
 Circle -7500403 true true 195 195 58
+
+cat
+false
+0
+Line -7500403 true 285 240 210 240
+Line -7500403 true 195 300 165 255
+Line -7500403 true 15 240 90 240
+Line -7500403 true 285 285 195 240
+Line -7500403 true 105 300 135 255
+Line -16777216 false 150 270 150 285
+Line -16777216 false 15 75 15 120
+Polygon -7500403 true true 300 15 285 30 255 30 225 75 195 60 255 15
+Polygon -7500403 true true 285 135 210 135 180 150 180 45 285 90
+Polygon -7500403 true true 120 45 120 210 180 210 180 45
+Polygon -7500403 true true 180 195 165 300 240 285 255 225 285 195
+Polygon -7500403 true true 180 225 195 285 165 300 150 300 150 255 165 225
+Polygon -7500403 true true 195 195 195 165 225 150 255 135 285 135 285 195
+Polygon -7500403 true true 15 135 90 135 120 150 120 45 15 90
+Polygon -7500403 true true 120 195 135 300 60 285 45 225 15 195
+Polygon -7500403 true true 120 225 105 285 135 300 150 300 150 255 135 225
+Polygon -7500403 true true 105 195 105 165 75 150 45 135 15 135 15 195
+Polygon -7500403 true true 285 120 270 90 285 15 300 15
+Line -7500403 true 15 285 105 240
+Polygon -7500403 true true 15 120 30 90 15 15 0 15
+Polygon -7500403 true true 0 15 15 30 45 30 75 75 105 60 45 15
+Line -16777216 false 164 262 209 262
+Line -16777216 false 223 231 208 261
+Line -16777216 false 136 262 91 262
+Line -16777216 false 77 231 92 261
 
 circle
 false
@@ -411,6 +461,23 @@ line half
 true
 0
 Line -7500403 true 150 0 150 150
+
+monkey
+true
+14
+Rectangle -6459832 true false 120 105 165 120
+Rectangle -6459832 true false 105 120 120 165
+Rectangle -6459832 true false 120 180 165 165
+Rectangle -6459832 true false 120 165 165 180
+Rectangle -6459832 true false 165 120 180 165
+Rectangle -6459832 true false 120 120 165 165
+Rectangle -16777216 true true 119 118 123 119
+Rectangle -16777216 true true 120 119 136 136
+Rectangle -16777216 true true 150 120 164 135
+Polygon -16777216 true true 124 183
+Polygon -6459832 true false 120 180 105 225 135 180 150 225 165 180
+Polygon -6459832 true false 120 180 60 150 75 135 120 165
+Polygon -1 true false 120 150 135 165 165 150 165 150 120 150
 
 pentagon
 false
