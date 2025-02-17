@@ -8,6 +8,8 @@ turtles-own [ energy ] ; establishes energy for woollys and predators
 
 to setup
   clear-all
+
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
 603
@@ -230,6 +232,19 @@ Scales include time
 
 (interesting or unusual features of NetLogo that the model uses, particularly in the Code tab; or where workarounds were needed for missing features)
 
+## 8. Pushing changes to Github
+1. Open git bash console
+2. Enter: git status
+3. Enter: git add Predation.nlogo
+	3a. if adding other files in the folder change "Predation.nlogo" to whatever file 	it is
+4. Enter: git commit -m "COMMIT NAME HERE"
+5. Enter: git push origin main
+
+## 9. Pulling Changes Down from Github
+1. Open git bash concole
+2. Enter folder: cd C:/Users/Jawor/Desktop/ABMS/Predation
+3. Enter: git fetch
+4. Enter: git pull origin main
 @#$#@#$#@
 default
 true
