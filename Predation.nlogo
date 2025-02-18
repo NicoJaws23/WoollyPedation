@@ -1,10 +1,12 @@
-globals [ max-woollys forests ] ;set up so that there is a maximum number of woollys
+globals [ max-woollys forests predator-kills] ;set up so that there is a maximum number of woollys
 
 ; set up the creation of woollys and predators
 breed [ woollys woolly ]
 breed [ predators predator ]
 
 turtles-own [ energy ] ; establishes energy for woollys and predators
+
+patches-own [ countdown ]
 
 to setup
   clear-all
@@ -15,7 +17,7 @@ to setup
   [
     set shape "monkey"
     set size 2
-    set energy 100000
+    set energy woolly-energy
     setxy random-xcor random-ycor
   ]
 
@@ -25,10 +27,10 @@ to setup
    set shape "cat"
    set size 2
    set color red
-   set energy 100000
+   set energy predator-energy
    setxy random-xcor random-ycor
   ]
-
+  reset-ticks
 end
 
 ;setting up fruit patches
@@ -39,6 +41,7 @@ to create-forests
       ask one-of neighbors4 [ set pcolor green ]
     ]
   ]
+  reset-ticks
 end
 
 to go
@@ -47,19 +50,99 @@ to go
   ;if all the wolves are gone and the number of woollys reaches the max, stop
   if not any? predators and count woollys > max-woollys [ user-message "The woollys have won the fight for survival" stop ]
   ask woollys [
+    detect-predators
     move
     ;need it to cost the woollys energy to move, so they will move to eat fruit
     set energy energy - 1 ;deducting energy with each move
     eat-fruit ;woollys eat fruit in the forst patches
     death ;woollys
+    reproduce-woollys ;chance of 2 indivs being able to reproduce, dictated by slider
+  ]
+  ask predators [
+    detect-woollys
+    move
+    set energy energy - 1
+    eat-woollys
+    death
+    reproduce-predators
+  ]
+
+  ask patches [ grow-fruits ]
+  tick
+end
+
+to move
+  rt random 50
+  lt random 50
+  fd 1
+end
+
+to death ;when woolly or predator dies, no more energy
+  if energy < 0 [ die]
+end
+
+to eat-fruit ;eating procedure for woollys
+  ;woollys eat "fruit", green patches, which then turn brown until they regrow
+  if pcolor = green [
+    set pcolor brown
+    set energy energy + woollys-gain-from-food
+  ]
+end
+
+to reproduce-woollys ;how woollys reproduce
+  if random-float 100 < woollys-reproduce [ ;roll the dice on producing an offspring
+    set energy (energy / 2) ; divide energy between parent and offspring
+    hatch 1 [ rt random-float 360 fd 1 ] ; create offspring
+  ]
+end
+
+to reproduce-predators ;predator reproduction, same structure as woolly reproduction
+  if random-float 100 < predators-reproduce [
+    set energy (energy / 2)
+    hatch 1 [ rt random-float 360 fd 1 ]
+  ]
+end
+
+to eat-woollys
+  let prey one-of woollys-here
+  if prey != nobody [
+    ask prey [ die ]
+    set energy energy + predators-gain-from-food
+    set predator-kills predator-kills + 1 ;increases count of when a woolly is killed by a predator
+  ]
+end
+
+to grow-fruits ;getting fruit to grow
+  if pcolor = brown [ ;if the patch color is brown, do this to it
+    ifelse countdown <= 0
+    [ set pcolor green
+      set countdown fruit-regrowth-time ]
+    [ set countdown countdown - 1 ]
+  ]
+end
+
+to detect-predators
+  let nearby-predator min-one-of predators in-radius woollys-detection-distance [distance myself]
+  if nearby-predator != nobody [
+    let angle-towards-away (towards nearby-predator) + 180  ;; Move away from predator
+    set heading angle-towards-away
+    fd 1  ;; Move one step away
+  ]
+end
+
+to detect-woollys
+  let nearby-woolly min-one-of (woollys in-radius predators-detection-distance) [distance myself]
+  if nearby-woolly != nobody [
+    set heading towards nearby-woolly  ;; Face the nearest woolly
+    fd 5  ;; Move one step toward it
   ]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-603
-10
-1093
-501
+579
+18
+1187
+627
 -1
 -1
 14.61
@@ -72,10 +155,10 @@ GRAPHICS-WINDOW
 1
 1
 1
--16
-16
--16
-16
+-20
+20
+-20
+20
 0
 0
 1
@@ -106,7 +189,7 @@ BUTTON
 113
 NIL
 go
-NIL
+T
 1
 T
 OBSERVER
@@ -147,7 +230,7 @@ initial-number-woollys
 initial-number-woollys
 0
 100
-50.0
+14.0
 1
 1
 NIL
@@ -162,7 +245,7 @@ initial-number-predators
 initial-number-predators
 0
 100
-7.0
+3.0
 1
 1
 NIL
@@ -192,7 +275,7 @@ predators-reproduce
 predators-reproduce
 0
 20
-5.0
+1.0
 1
 1
 %
@@ -203,11 +286,11 @@ SLIDER
 227
 185
 260
-woollys-detection
-woollys-detection
+woollys-detection-distance
+woollys-detection-distance
 5
 100
-50.0
+16.0
 1
 1
 NIL
@@ -218,11 +301,11 @@ SLIDER
 227
 382
 260
-predators-detection
-predators-detection
+predators-detection-distance
+predators-detection-distance
 5
 100
-50.0
+77.0
 1
 1
 NIL
@@ -248,7 +331,7 @@ fruit-regrowth-time
 fruit-regrowth-time
 0
 100
-50.0
+41.0
 1
 1
 NIL
@@ -259,15 +342,90 @@ SLIDER
 325
 180
 358
-woolys-gain-from-food
-woolys-gain-from-food
+woollys-gain-from-food
+woollys-gain-from-food
 0
 100
-50.0
+10.0
 1
 1
 NIL
 HORIZONTAL
+
+SLIDER
+227
+271
+399
+304
+predators-gain-from-food
+predators-gain-from-food
+0
+100
+15.0
+1
+1
+NIL
+HORIZONTAL
+
+PLOT
+230
+399
+491
+583
+Woollly and Predator Population
+time
+pop
+0.0
+100.0
+0.0
+100.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -8431303 true "" "plot count woollys"
+"pen-1" 1.0 0 -5298144 true "" "plot count predators"
+
+SLIDER
+15
+378
+187
+411
+woolly-energy
+woolly-energy
+0
+5000
+1200.0
+100
+1
+NIL
+HORIZONTAL
+
+SLIDER
+241
+337
+413
+370
+predator-energy
+predator-energy
+0
+5000
+1200.0
+100
+1
+NIL
+HORIZONTAL
+
+MONITOR
+130
+54
+219
+100
+NIL
+predator-kills
+17
+1
+11
 
 @#$#@#$#@
 ## 1. Purpose and patterns
@@ -308,7 +466,7 @@ Scales include time
 
 ## 8. Pushing changes to Github
 1. Open git bash console
-2. Enter: cd C:\Users\Jawor\Desktop\ABMS\Predation
+2. Enter: cd C:/Users/Jawor/Desktop/ABMS/Predation
 3. Enter: git status
 4. Enter: git add Predation.nlogo
 	4a. if adding other files in the folder change "Predation.nlogo" to whatever file 	it is
