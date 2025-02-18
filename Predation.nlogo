@@ -1,4 +1,4 @@
-globals [ max-woollys ] ;set up so that there is a maximum number of woollys
+globals [ max-woollys forests ] ;set up so that there is a maximum number of woollys
 
 ; set up the creation of woollys and predators
 breed [ woollys woolly ]
@@ -8,13 +8,13 @@ turtles-own [ energy ] ; establishes energy for woollys and predators
 
 to setup
   clear-all
+  create-forests
   ifelse netlogo-web? [ set max-woollys 10000 ] [ set max-woollys 30000]
-
   ; create the woollys
   create-woollys initial-number-woollys
   [
     set shape "monkey"
-    set size 1.5
+    set size 2
     set energy 100000
     setxy random-xcor random-ycor
   ]
@@ -29,6 +29,30 @@ to setup
    setxy random-xcor random-ycor
   ]
 
+end
+
+;setting up fruit patches
+to create-forests
+  ask n-of 10 patches [ set pcolor green ]
+  repeat 6 [
+    ask patches with [ pcolor = green ] [
+      ask one-of neighbors4 [ set pcolor green ]
+    ]
+  ]
+end
+
+to go
+  ;if everyone is dead, the model stops
+  if not any? turtles [stop]
+  ;if all the wolves are gone and the number of woollys reaches the max, stop
+  if not any? predators and count woollys > max-woollys [ user-message "The woollys have won the fight for survival" stop ]
+  ask woollys [
+    move
+    ;need it to cost the woollys energy to move, so they will move to eat fruit
+    set energy energy - 1 ;deducting energy with each move
+    eat-fruit ;woollys eat fruit in the forst patches
+    death ;woollys
+  ]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -214,6 +238,36 @@ show-energy?
 1
 1
 -1000
+
+SLIDER
+5
+279
+177
+312
+fruit-regrowth-time
+fruit-regrowth-time
+0
+100
+50.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+8
+325
+180
+358
+woolys-gain-from-food
+woolys-gain-from-food
+0
+100
+50.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## 1. Purpose and patterns
