@@ -1,4 +1,4 @@
-globals [ max-woollys forests predator-kills] ;set up so that there is a maximum number of woollys
+globals [ max-woollys forests predator-kills ] ;set up so that there is a maximum number of woollys
 
 ; set up the creation of woollys and predators
 breed [ woollys woolly ]
@@ -19,6 +19,7 @@ to setup
     set size 2
     set energy woolly-energy
     setxy random-xcor random-ycor
+    pen-down
   ]
 
   ; create predators
@@ -122,7 +123,7 @@ to grow-fruits ;getting fruit to grow
 end
 
 to detect-predators
-  let nearby-predator min-one-of predators in-radius woollys-detection-distance [distance myself]
+  let nearby-predator min-one-of (predators in-radius woollys-detection-distance) [distance myself]
   if nearby-predator != nobody [
     let angle-towards-away (towards nearby-predator) + 180  ;; Move away from predator
     set heading angle-towards-away
@@ -141,8 +142,8 @@ end
 GRAPHICS-WINDOW
 579
 18
-1187
-627
+1186
+626
 -1
 -1
 14.61
@@ -230,7 +231,7 @@ initial-number-woollys
 initial-number-woollys
 0
 100
-14.0
+36.0
 1
 1
 NIL
@@ -245,7 +246,7 @@ initial-number-predators
 initial-number-predators
 0
 100
-3.0
+10.0
 1
 1
 NIL
@@ -258,9 +259,9 @@ SLIDER
 209
 woollys-reproduce
 woollys-reproduce
-1
+0
 20
-4.0
+0.0
 1
 1
 %
@@ -275,7 +276,7 @@ predators-reproduce
 predators-reproduce
 0
 20
-1.0
+0.0
 1
 1
 %
@@ -331,7 +332,7 @@ fruit-regrowth-time
 fruit-regrowth-time
 0
 100
-41.0
+10.0
 1
 1
 NIL
@@ -346,7 +347,7 @@ woollys-gain-from-food
 woollys-gain-from-food
 0
 100
-10.0
+45.0
 1
 1
 NIL
@@ -420,7 +421,7 @@ MONITOR
 130
 54
 219
-100
+99
 NIL
 predator-kills
 17
