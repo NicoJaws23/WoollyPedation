@@ -1,15 +1,16 @@
-globals [ max-woollys forests predator-kills ] ;set up so that there is a maximum number of woollys
+globals [ max-woollys forests predator-kills woolly-data ] ;set up so that there is a maximum number of woollys
 
 ; set up the creation of woollys and predators
 breed [ woollys woolly ]
 breed [ predators predator ]
 
-turtles-own [ energy ] ; establishes energy for woollys and predators
+turtles-own [ energy birth-tick parent-id energy-history offspring-count ] ; establishes energy for woollys and predators
 
-patches-own [ countdown ]
+patches-own [ countdown danger-timer ]
 
 to setup
   clear-all
+  set woolly-data []
   create-forests
   ifelse netlogo-web? [ set max-woollys 10000 ] [ set max-woollys 30000]
   ; create the woollys
@@ -19,7 +20,12 @@ to setup
     set size 2
     set energy woolly-energy
     setxy random-xcor random-ycor
-    pen-down
+    set birth-tick ticks
+    set parent-id "None" ;first woollys dont have parents :(( "WE DIDNT ASK TO BE BORN AHHHHHHH"
+    set energy-history (list energy) ;Track energy
+    set offspring-count 0 ;set initial offspring count NOTE: Think about making it so each indiv has a specific sex, can we add
+    ;life history stuff to this, ex: After X amount of ticks you are a teen, then X more you are an adult, after X amount of ticks
+    ;you dont stay within 1 patch of mom
   ]
 
   ; create predators
@@ -42,6 +48,12 @@ to create-forests
       ask one-of neighbors4 [ set pcolor green ]
     ]
   ]
+
+  ; Write CSV headers
+  file-open "C:/Users/Jawor/Desktop/ABMS/Predation/woolly_data.csv"
+  file-print "id,energy,offspring,parents,ticks"
+  file-close
+
   reset-ticks
 end
 
@@ -51,8 +63,10 @@ to go
   ;if all the wolves are gone and the number of woollys reaches the max, stop
   if not any? predators and count woollys > max-woollys [ user-message "The woollys have won the fight for survival" stop ]
   ask woollys [
+    set energy-history lput energy energy-history ;track energy over time
     detect-predators
     move
+    avoid-danger ;remember and avoid areas where predator was encounterd
     ;need it to cost the woollys energy to move, so they will move to eat fruit
     set energy energy - 1 ;deducting energy with each move
     eat-fruit ;woollys eat fruit in the forst patches
@@ -69,6 +83,13 @@ to go
   ]
 
   ask patches [ grow-fruits ]
+
+  write-woolly-data ;add data to csv
+
+  if not any? woollys [
+    export-data
+    stop
+  ]
   tick
 end
 
@@ -78,8 +99,21 @@ to move
   fd 1
 end
 
+to avoid-danger
+  let safe-patches patches in-radius 1 with [ danger-timer = 0 ] ;only go to safe patches
+  if any? safe-patches [
+    move-to one-of safe-patches ;if patch is not safe, find a safe one
+  ]
+  set energy energy - 1
+end
+
 to death ;when woolly or predator dies, no more energy
-  if energy < 0 [ die]
+  if energy < 0 [
+    die
+    let death-tick ticks ;time of death
+    let my-data (list who birth-tick parent-id offspring-count death-tick energy-history)
+    set woolly-data lput my-data woolly-data ;save to log
+  ]
 end
 
 to eat-fruit ;eating procedure for woollys
@@ -93,7 +127,14 @@ end
 to reproduce-woollys ;how woollys reproduce
   if random-float 100 < woollys-reproduce [ ;roll the dice on producing an offspring
     set energy (energy / 2) ; divide energy between parent and offspring
-    hatch 1 [ rt random-float 360 fd 1 ] ; create offspring
+    hatch 1 [
+      rt random-float 360 fd 1 ; create offspring
+      set birth-tick ticks ;start tracking offsprings lifespan
+      set parent-id [who] of myself ;track parents ID
+      set energy-history (list energy)
+      set offspring-count 0
+    ]
+    set offspring-count offspring-count + 1 ;parent gets a count of number of offspring
   ]
 end
 
@@ -128,6 +169,7 @@ to detect-predators
     let angle-towards-away (towards nearby-predator) + 180  ;; Move away from predator
     set heading angle-towards-away
     fd 1  ;; Move one step away
+    ask patch-here [ set danger-timer danger-avoidance-time ]
   ]
 end
 
@@ -137,6 +179,36 @@ to detect-woollys
     set heading towards nearby-woolly  ;; Face the nearest woolly
     fd 5  ;; Move one step toward it
   ]
+end
+
+to write-woolly-data
+  ; Open file in append mode (so new data is added, not overwritten)
+  file-open "woolly_data.csv"
+
+  ; Loop through all woollys and log their data
+  ask woollys [
+    file-print (word who "," energy "," offspring-count "," parent-id "," ticks)
+  ]
+
+  file-close
+end
+
+to export-data
+  let filename "C:/Users/Jawor/Desktop/ABMS/Predation/woolly_data.csv"
+  let headers "ID,BirthTick,ParentID,OffspringCount,DeathTick,EnergyHistory\n"
+
+  ;Open a file and write headers
+  file-close-all
+  file-open filename
+  file-write headers
+
+  ;Write the data
+  foreach woolly-data [ wd ->
+    let row (word (item 0 wd) "," (item 1 wd) "," (item 2 wd) "," (item 3 wd) "," (item 4 wd) "," (item 5 wd) "\n")
+    file-write row
+  ]
+  file-close
+  user-message "Data exported to woolly_data.csv"
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -231,7 +303,7 @@ initial-number-woollys
 initial-number-woollys
 0
 100
-36.0
+10.0
 1
 1
 NIL
@@ -246,7 +318,7 @@ initial-number-predators
 initial-number-predators
 0
 100
-10.0
+9.0
 1
 1
 NIL
@@ -261,7 +333,7 @@ woollys-reproduce
 woollys-reproduce
 0
 20
-0.0
+4.0
 1
 1
 %
@@ -276,7 +348,7 @@ predators-reproduce
 predators-reproduce
 0
 20
-0.0
+1.0
 1
 1
 %
@@ -312,17 +384,6 @@ predators-detection-distance
 NIL
 HORIZONTAL
 
-SWITCH
-417
-60
-551
-93
-show-energy?
-show-energy?
-1
-1
--1000
-
 SLIDER
 5
 279
@@ -332,7 +393,7 @@ fruit-regrowth-time
 fruit-regrowth-time
 0
 100
-10.0
+100.0
 1
 1
 NIL
@@ -347,7 +408,7 @@ woollys-gain-from-food
 woollys-gain-from-food
 0
 100
-45.0
+69.0
 1
 1
 NIL
@@ -428,6 +489,21 @@ predator-kills
 1
 11
 
+SLIDER
+17
+434
+195
+467
+danger-avoidance-time
+danger-avoidance-time
+0
+100
+21.0
+1
+1
+NIL
+HORIZONTAL
+
 @#$#@#$#@
 ## 1. Purpose and patterns
 
@@ -479,6 +555,14 @@ Scales include time
 2. Enter folder: cd C:/Users/Jawor/Desktop/ABMS/Predation
 3. Enter: git fetch
 4. Enter: git pull origin main
+
+## 10. Future Directions
+- Add something which assigns male or female to each turtle at random, both for the woollys and the jaguars
+- Make it so that in order to reproduce, a male and female need to interact
+- Fix the data collection, something seems to be wrong with it, need to make sure its working right
+- Add in woollys being able to track predators (predators poop) and predators can track woollys (poop, vocalize)
+- Random woolly vocalizes at random time, at least ever X amount of ticks?
+- Determine how long a tick is
 @#$#@#$#@
 default
 true
